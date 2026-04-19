@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#C8102E">
+  <title>¿Qué sabor de Bon Bon Bum eres? 🍭</title>
+  <link rel="stylesheet" href="fonts/satoshi.css">
+  <style>
+    *, *::before, *::after {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --red:    #C8102E;
+      --green:  #2D9B27;
+      --yellow: #FFD600;
+      --dark:   #140008;
+      --white:  #FFFFFF;
+      --r: 18px;
+    }
+
+    html { height: 100%; }
+
+    body {
+      font-family: 'Satoshi', 'Arial Rounded MT Bold', Arial, sans-serif;
+      height: 100%;
+      overflow: hidden;
+      background: var(--red);
+    }
+
+    /* ────── SCREENS ────── */
+    .screen {
+      position: fixed; inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .screen.active { display: flex; }
+
+    /* ────────────────────────────────────────
+       INTRO
+    ──────────────────────────────────────── */
+    #s-intro {
+      background: var(--red);
+      overflow: hidden;
+    }
+
+    .intro-bg {
+      position: absolute; inset: 0;
+      background: url('pictures/Fondo_quiz.png') center/cover no-repeat;
+      opacity: .18;
+    }
+
+    /* decorative silhouettes */
+    .deco {
+      position: absolute;
+      pointer-events: none;
+      filter: brightness(10);
+      opacity: .07;
+    }
+    .deco-tl { top: -40px; left: -30px; width: 220px; transform: rotate(-25deg); }
+    .deco-br { bottom: -40px; right: -30px; width: 220px; transform: rotate(20deg); }
+    .deco-tr { top: 30px; right: -20px; width: 140px; transform: rotate(15deg); }
+    .deco-bl { bottom: 60px; left: -10px; width: 130px; transform: rotate(-12deg); }
+
+    .intro-inner {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 14px; text-align: center;
+      padding: 24px 28px 32px;
+      max-width: 420px; width: 100%;
+    }
+
+    .tag-pill {
+      background: var(--yellow);
+      color: var(--dark);
+      font-size: 10px; font-weight: 800;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      padding: 6px 18px; border-radius: 100px;
+    }
+
+    .hero-chupeta {
+      width: 150px; height: auto;
+      filter: drop-shadow(0 24px 40px rgba(0,0,0,.45));
+      animation: float 3.2s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0)   rotate(-4deg); }
+      50%      { transform: translateY(-16px) rotate(4deg); }
+    }
+
+    .intro-title {
+      font-size: clamp(26px, 7vw, 40px);
+      font-weight: 900; line-height: 1.1;
+      color: var(--white); letter-spacing: -1px;
+    }
+    .intro-title em { color: var(--yellow); font-style: normal; }
+
+    .intro-sub {
+      font-size: 14px; font-weight: 500;
+      color: rgba(255,255,255,.82); line-height: 1.55;
+      max-width: 300px;
+    }
+
+    .btn-start {
+      margin-top: 6px;
+      background: var(--yellow); color: var(--dark);
+      border: none; cursor: pointer;
+      padding: 18px 52px; border-radius: 100px;
+      font-family: inherit; font-size: 15px; font-weight: 900;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      box-shadow: 0 8px 28px rgba(0,0,0,.30);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn-start:hover { transform: scale(1.06); box-shadow: 0 10px 36px rgba(0,0,0,.4); }
+    .btn-start:active { transform: scale(.97); }
+
+    .intro-meta {
+      font-size: 11px; color: rgba(255,255,255,.5);
+      letter-spacing: .5px;
+    }
+
+    /* ────────────────────────────────────────
+       QUESTION SCREEN
+    ──────────────────────────────────────── */
+    #s-quiz {
+      background: #fff;
+      justify-content: flex-start;
+      overflow-y: auto;
+    }
+
+    /* sticky header */
+    .qz-header {
+      width: 100%; flex-shrink: 0;
+      background: var(--red);
+      padding: 14px 20px 18px;
+    }
+    .qz-header-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .qz-brand { font-size: 10px; font-weight: 700; letter-spacing: 2.5px; color: rgba(255,255,255,.6); text-transform: uppercase; }
+    .qz-count { font-size: 12px; font-weight: 800; color: var(--yellow); letter-spacing: 1px; }
+
+    .dots {
+      display: flex; gap: 6px; align-items: center;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,.22);
+      transition: all .3s cubic-bezier(.34,1.56,.64,1);
+    }
+    .dot.done  { background: var(--yellow); width: 22px; border-radius: 10px; }
+    .dot.active { background: #fff; transform: scale(1.25); }
+
+    /* question body */
+    .qz-body {
+      padding: 28px 22px 36px;
+      display: flex; flex-direction: column; gap: 18px;
+      width: 100%; max-width: 500px; margin: 0 auto;
+    }
+
+    .q-label {
+      font-size: 10px; font-weight: 800;
+      letter-spacing: 3px; text-transform: uppercase;
+      color: var(--red); opacity: .55;
+    }
+
+    .q-text {
+      font-size: clamp(20px, 5vw, 26px);
+      font-weight: 900; color: var(--dark);
+      line-height: 1.2; letter-spacing: -.5px;
+    }
+
+    /* answer cards */
+    .answers { display: flex; flex-direction: column; gap: 10px; }
+
+    .ans {
+      width: 100%;
+      background: #F6F6F6; border: 2.5px solid transparent;
+      border-radius: var(--r);
+      padding: 15px 18px;
+      display: flex; align-items: center; gap: 14px;
+      cursor: pointer; text-align: left;
+      transition: all .18s cubic-bezier(.34,1.56,.64,1);
+      font-family: inherit;
+    }
+    .ans:hover { background: #FFF0F3; border-color: var(--red); transform: translateX(4px); }
+    .ans-emoji { font-size: 22px; flex-shrink: 0; line-height: 1; }
+    .ans-text  { font-size: 14px; font-weight: 600; color: var(--dark); line-height: 1.35; }
+
+    .ans.chosen {
+      background: var(--red); border-color: var(--red);
+      transform: scale(1.02);
+    }
+    .ans.chosen .ans-text { color: #fff; }
+    .ans.chosen .ans-emoji { filter: brightness(10) saturate(0); opacity: .9; }
+    .ans.faded { opacity: .3; transform: scale(.97); pointer-events: none; }
+
+    /* slide animations for question transitions */
+    @keyframes qSlideIn  { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes qSlideOut { from { opacity:1; transform:translateX(0); }     to { opacity:0; transform:translateX(-40px); } }
+    .q-slide-in  { animation: qSlideIn  .35s cubic-bezier(.34,1.56,.64,1) both; }
+    .q-slide-out { animation: qSlideOut .22s ease-in both; }
+
+    /* ────────────────────────────────────────
+       LOADING SCREEN
+    ──────────────────────────────────────── */
+    #s-loading { background: var(--red); gap: 20px; }
+
+    .load-chupeta {
+      width: 110px;
+      animation: wobble 1s ease-in-out infinite;
+    }
+    @keyframes wobble {
+      0%,100% { transform: rotate(-8deg) scale(1); }
+      25%      { transform: rotate(8deg) scale(1.08); }
+      50%      { transform: rotate(-4deg) scale(1); }
+      75%      { transform: rotate(6deg) scale(1.05); }
+    }
+
+    .load-text {
+      font-size: 20px; font-weight: 900; color: #fff;
+      letter-spacing: -.3px;
+    }
+    .load-text em { color: var(--yellow); font-style: normal; }
+
+    .load-dots { display: flex; gap: 8px; }
+    .ld {
+      width: 11px; height: 11px; border-radius: 50%; background: var(--yellow);
+      animation: ldBounce .7s ease-in-out infinite;
+    }
+    .ld:nth-child(2) { animation-delay: .14s; }
+    .ld:nth-child(3) { animation-delay: .28s; }
+    @keyframes ldBounce {
+      0%,100% { transform: translateY(0); opacity: .45; }
+      50%      { transform: translateY(-11px); opacity: 1; }
+    }
+
+    /* ────────────────────────────────────────
+       RESULT SCREEN
+    ──────────────────────────────────────── */
+    #s-result {
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 20; }
+
+    .res-bg {
+      position: fixed; inset: 0; z-index: 0;
+      transition: background .5s ease;
+    }
+
+    .res-inner {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center;
+      gap: 10px; padding: 44px 26px 50px;
+      max-width: 420px; width: 100%;
+    }
+
+    .res-eyebrow {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(255,255,255,.65);
+    }
+
+    /* image + glow ring */
+    .res-img-wrap {
+      position: relative;
+      width: 200px; height: 200px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 4px 0;
+    }
+    .res-glow {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: rgba(255,255,255,.15);
+      animation: glow 2.2s ease-in-out infinite;
+    }
+    @keyframes glow {
+      0%,100% { transform: scale(1);   opacity: .5; }
+      50%      { transform: scale(1.12); opacity: 1; }
+    }
+    #res-img {
+      width: 190px; height: auto;
+      position: relative; z-index: 2;
+      filter: drop-shadow(0 22px 42px rgba(0,0,0,.45));
+      animation: popIn .7s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @keyframes popIn {
+      from { transform: scale(.2) rotate(-18deg); opacity: 0; }
+      to   { transform: scale(1)  rotate(0deg);  opacity: 1; }
+    }
+
+    .res-badge {
+      background: rgba(255,255,255,.18);
+      border: 1.5px solid rgba(255,255,255,.32);
+      color: #fff; font-size: 10px; font-weight: 800;
+      letter-spacing: 2.5px; text-transform: uppercase;
+      padding: 6px 20px; border-radius: 100px;
+    }
+
+    .res-name {
+      font-size: clamp(34px, 10vw, 54px);
+      font-weight: 900; color: #fff;
+      line-height: 1; letter-spacing: -1.5px;
+      text-shadow: 0 4px 20px rgba(0,0,0,.3);
+      animation: nameIn .6s .3s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @keyframes nameIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .res-desc {
+      font-size: 14px; font-weight: 500;
+      color: rgba(255,255,255,.88); line-height: 1.65;
+      max-width: 320px;
+      animation: nameIn .6s .5s both;
+    }
+
+    .res-tagline {
+      font-size: 13px; font-weight: 700; font-style: italic;
+      color: var(--yellow);
+      animation: nameIn .6s .65s both;
+    }
+
+    .res-actions {
+      display: flex; flex-direction: column;
+      gap: 10px; width: 100%; max-width: 290px;
+      margin-top: 14px;
+      animation: nameIn .5s .8s both;
+    }
+    .btn-share {
+      background: #fff; color: var(--dark);
+      border: none; cursor: pointer;
+      padding: 17px 28px; border-radius: 100px;
+      font-family: inherit; font-size: 15px; font-weight: 900;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: transform .15s;
+    }
+    .btn-share:hover { transform: scale(1.04); }
+    .btn-retry {
+      background: transparent; color: rgba(255,255,255,.8);
+      border: 2px solid rgba(255,255,255,.35);
+      padding: 14px 28px; border-radius: 100px;
+      font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-retry:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.8); color: #fff; }
+
+    /* ────────────────────────────────────────
+       TOAST
+    ──────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(14px);
+      background: var(--dark); color: #fff;
+      padding: 13px 26px; border-radius: 100px;
+      font-size: 13px; font-weight: 700;
+      opacity: 0; transition: all .3s; z-index: 99;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ────────────────────────────────────────
+       RESPONSIVE
+    ──────────────────────────────────────── */
+    @media (max-height: 680px) {
+      .hero-chupeta { width: 100px; }
+      .intro-title  { font-size: 22px; }
+      .intro-inner  { gap: 10px; }
+      .res-img-wrap { width: 140px; height: 140px; }
+      #res-img      { width: 130px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════
+     INTRO
+══════════════════════════════════ -->
+<section id="s-intro" class="screen active">
+  <div class="intro-bg"></div>
+
+  <img class="deco deco-tl" src="pictures/Rojo_Fresa_Silueta_Blanca.PNG"    alt="">
+  <img class="deco deco-br" src="pictures/Mandarina_Silueta_Blanca.PNG"     alt="">
+  <img class="deco deco-tr" src="pictures/Maracuya_Silueta_Blanca.PNG"      alt="">
+  <img class="deco deco-bl" src="pictures/Sandía_Silueta_Blanca.PNG"        alt="">
+
+  <div class="intro-inner">
+    <div class="tag-pill">✨ Siente tu Bum</div>
+
+    <img class="hero-chupeta" src="pictures/Rojo_Fresa.PNG" alt="Bon Bon Bum">
+
+    <h1 class="intro-title">
+      ¿Qué sabor de<br><em>Bon Bon Bum</em><br>eres tú? 🍭
+    </h1>
+
+    <p class="intro-sub">
+      7 preguntas. 7 sabores. Un resultado que te va a representar mejor que tu foto de perfil.
+    </p>
+
+    <button class="btn-start" id="btn-start">¡DESCÚBRELO YA!</button>
+
+    <p class="intro-meta">55 años de historia &nbsp;·&nbsp; 7 sabores &nbsp;·&nbsp; 1 eres tú</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     QUIZ
+══════════════════════════════════ -->
+<section id="s-quiz" class="screen">
+  <div class="qz-header">
+    <div class="qz-header-row">
+      <span class="qz-brand">Bon Bon Bum Quiz</span>
+      <span class="qz-count" id="qz-count">1 / 7</span>
+    </div>
+    <div class="dots" id="dots"></div>
+  </div>
+  <div class="qz-body" id="qz-body">
+    <p class="q-label" id="q-label"></p>
+    <h2 class="q-text" id="q-text"></h2>
+    <div class="answers" id="answers"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     LOADING
+══════════════════════════════════ -->
+<section id="s-loading" class="screen">
+  <img class="load-chupeta" src="pictures/Cereza_Intensa.PNG" alt="">
+  <p class="load-text">Calculando tu <em>BUM</em>…</p>
+  <div class="load-dots">
+    <div class="ld"></div><div class="ld"></div><div class="ld"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     RESULT
+══════════════════════════════════ -->
+<section id="s-result" class="screen">
+  <canvas id="confetti"></canvas>
+  <div class="res-bg" id="res-bg"></div>
+
+  <div class="res-inner">
+    <p class="res-eyebrow">Tu sabor es…</p>
+
+    <div class="res-img-wrap">
+      <div class="res-glow"></div>
+      <img id="res-img" src="" alt="">
+    </div>
+
+    <span class="res-badge" id="res-badge"></span>
+    <h1 class="res-name" id="res-name"></h1>
+    <p class="res-desc" id="res-desc"></p>
+    <p class="res-tagline" id="res-tagline"></p>
+
+    <div class="res-actions">
+      <button class="btn-share" id="btn-share">📤 Compartir resultado</button>
+      <button class="btn-retry" id="btn-retry">🔄 Jugar de nuevo</button>
+    </div>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════
+     SCRIPT
+══════════════════════════════════ -->
+<script>
+/* ─────────────────────────────────
+   QUIZ DATA
+───────────────────────────────── */
+const QS = [
+  {
+    label: "VIBES",
+    text: "¿Cuál es tu energy en un sábado perfecto?",
+    opts: [
+      { e:"🛍️", t:"De shopping buscando el outfit más fire",            f:"RF" },
+      { e:"🏊", t:"En la piscina o parque con toda la crew",              f:"SA" },
+      { e:"🗺️", t:"Explorando un lugar que nadie conoce todavía",        f:"MA" },
+      { e:"🎧", t:"En casa, playlist perfecta, sin interrupciones",       f:"CI" }
+    ]
+  },
+  {
+    label: "REDES",
+    text: "Tu feed de Instagram es…",
+    opts: [
+      { e:"💥", t:"Fotos con toda la emoción a flor de piel",             f:"FI" },
+      { e:"🎨", t:"Arte, texturas raras y cosas hermosas que nadie nota", f:"LU" },
+      { e:"🌈", t:"Un caos colorido lleno de memes y buena vibra",        f:"MN" },
+      { e:"✨", t:"Todo coordinado, paleta perfecta, estética total",      f:"RF" }
+    ]
+  },
+  {
+    label: "SQUAD",
+    text: "En el grupo de amigos eres…",
+    opts: [
+      { e:"🚀", t:"El/la que propone planes locos que sí se hacen",           f:"SA" },
+      { e:"😂", t:"El/la que siempre tiene el chiste perfecto del momento",    f:"MN" },
+      { e:"🔮", t:"El/la misterioso/a que todos quieren conocer más",          f:"CI" },
+      { e:"🎭", t:"El/la creativo/a que siempre sorprende con algo nuevo",     f:"LU" }
+    ]
+  },
+  {
+    label: "REACCIÓN",
+    text: "¿Cómo reaccionas si te dan una Bon Bon Bum de sorpresa?",
+    opts: [
+      { e:"😭", t:"Me emociono full, es literalmente lo mejor del día",    f:"FI" },
+      { e:"😌", t:"La saboreo despacio, aprovecho cada segundo",           f:"MA" },
+      { e:"😎", t:"La levanto como trofeo pa' que todos me la vean",       f:"RF" },
+      { e:"🫀", t:"La acepto sin decir mucho pero por dentro exploto",     f:"CI" }
+    ]
+  },
+  {
+    label: "MÚSICA",
+    text: "¿Cuál es tu canción del momento?",
+    opts: [
+      { e:"🎉", t:"Un hit que suena en todas las fiestas sin excepción",      f:"SA" },
+      { e:"📱", t:"Ese viral de TikTok que ya todo el mundo tiene en su story",f:"MN" },
+      { e:"💔", t:"Una balada intensa que sientes en el alma entera",          f:"FI" },
+      { e:"🎸", t:"Un indie que descubriste antes que nadie más",              f:"LU" }
+    ]
+  },
+  {
+    label: "CRUSH",
+    text: "¿Cómo te comunicas con tu crush?",
+    opts: [
+      { e:"🌶️", t:"Le mando algo inesperado, algo que solo yo haría",          f:"MA" },
+      { e:"👁️",  t:"No le escribo pero pienso en él/ella todo el tiempo",      f:"CI" },
+      { e:"💬", t:"Directo/a y con confianza, sin rodeos ni dudas",            f:"RF" },
+      { e:"🌊", t:"Lo/la incluyo en todos mis planes hasta que me haga caso",  f:"SA" }
+    ]
+  },
+  {
+    label: "SUPERPODER",
+    text: "Si tu Bon Bon Bum fuera un superpoder, ¿cuál sería el tuyo?",
+    opts: [
+      { e:"🌍", t:"Transportarte a lugares exóticos con solo imaginarlos",     f:"MA" },
+      { e:"🔥", t:"Hacer que todos sientan tus emociones al 1000%",            f:"FI" },
+      { e:"👁️‍🗨️",t:"Ver el arte y la belleza en lo que nadie más nota",          f:"LU" },
+      { e:"☀️", t:"Alegrar y hacer reír cualquier ambiente al instante",        f:"MN" }
+    ]
+  }
+];
+
+/* SCORING SANITY — each flavor appears exactly 4 times:
+   RF  Q1A Q2D Q4C Q6C
+   SA  Q1B Q3A Q5A Q6D
+   MA  Q1C Q4B Q6A Q7A
+   CI  Q1D Q3C Q4D Q6B
+   FI  Q2A Q4A Q5C Q7B
+   LU  Q2B Q3D Q5D Q7C
+   MN  Q2C Q3B Q5B Q7D
+*/
+
+const RESULTS = {
+  RF: {
+    name:    "Rojo Fresa",
+    badge:   "El / La Icónico/a",
+    img:     "pictures/Rojo_Fresa.PNG",
+    desc:    "Eres el clásico que nunca pasa de moda. Tienes una presencia que no pasa desapercibida — cuando entras a cualquier lugar, todos lo saben. Seguro/a, trendy y con un carisma que magnetiza. La gente siempre te busca para tomar decisiones.",
+    tagline: "Siente tu Bum: cuando entras, el cuarto cambia.",
+    bg:      "linear-gradient(145deg, #C8102E 0%, #7A0019 100%)"
+  },
+  FI: {
+    name:    "Fresa Intensa",
+    badge:   "El / La Intenso/a",
+    img:     "pictures/Fresa_Intessa.PNG",
+    desc:    "Todo lo que haces lo haces con el corazón al 200%. Amas profundo, celebras grande y cuando algo te afecta, se nota. No le temes a las emociones — eso te hace auténtico/a. Eres ese/a amigo/a que manda mensaje a las 3am porque \"tenía que decirte algo\".",
+    tagline: "Siente tu Bum: sin intensidad, no hay vida.",
+    bg:      "linear-gradient(145deg, #E8165A 0%, #8B0035 100%)"
+  },
+  MA: {
+    name:    "Maracuyá",
+    badge:   "El / La Explorador/a",
+    img:     "pictures/Maracuya.PNG",
+    desc:    "Raro/a en el mejor sentido de la palabra. Siempre un paso adelante, siempre buscando algo nuevo. No te conformas con lo conocido. Tienes una energía exótica y fascinante que atrae a todos sin que ni siquiera lo intentes.",
+    tagline: "Siente tu Bum: el mundo es muy grande para quedarte quieto/a.",
+    bg:      "linear-gradient(145deg, #E87B00 0%, #8C4100 100%)"
+  },
+  MN: {
+    name:    "Mandarina",
+    badge:   "El / La Sunshine",
+    img:     "pictures/Mandarina.PNG",
+    desc:    "Eres la energía que levanta cualquier ambiente. Donde estás tú, hay risas y buena vibra. Tienes el don de hacer que todos se sientan incluidos y bienvenidos. Tu sonrisa y tu humor son tus superpoderes reales.",
+    tagline: "Siente tu Bum: la vida es mejor viviéndola alegre.",
+    bg:      "linear-gradient(145deg, #FF6B1A 0%, #C04400 100%)"
+  },
+  LU: {
+    name:    "Lulo",
+    badge:   "El / La Creativo/a",
+    img:     "pictures/Lulo.PNG",
+    desc:    "No sigues tendencias, las creas. Tienes un gusto único y un ojo artístico que te diferencia. Eres de los/as que descubren las cosas antes que nadie y después dicen \"yo lo sabía primero\". Tu creatividad es tu sello inconfundible.",
+    tagline: "Siente tu Bum: lo más cool es lo que nadie más está haciendo.",
+    bg:      "linear-gradient(145deg, #5FA818 0%, #2B5A08 100%)"
+  },
+  SA: {
+    name:    "Sandía",
+    badge:   "El / La Veranero/a",
+    img:     "pictures/Sandía.PNG",
+    desc:    "La vida es una fiesta permanente y tú eres el/la anfitrión/a. Energía verano los 365 días del año, sin importar el clima. Sociable, divertido/a y siempre listo/a para el siguiente plan. Contigo nunca hay un momento aburrido.",
+    tagline: "Siente tu Bum: el buen rollo no tiene temporada.",
+    bg:      "linear-gradient(145deg, #E8294C 0%, #1F8C28 100%)"
+  },
+  CI: {
+    name:    "Cereza Intensa",
+    badge:   "El / La Misterioso/a",
+    img:     "pictures/Cereza_Intensa.PNG",
+    desc:    "Profundo/a, magnético/a y con capas que no todos logran descifrar. Tu silencio dice más que mil palabras. No le llegas a todo el mundo, pero a quien sí le llegas, se queda para siempre. El universo tiene algo especial preparado para ti.",
+    tagline: "Siente tu Bum: lo más intenso viene en los paquetes más pequeños.",
+    bg:      "linear-gradient(145deg, #6B0F2E 0%, #200008 100%)"
+  }
+};
+
+/* ─────────────────────────────────
+   STATE
+───────────────────────────────── */
+let qi = 0;
+let scores = {};
+let busy = false;
+let winner = "RF";
+
+/* ─────────────────────────────────
+   HELPERS
+───────────────────────────────── */
+const $ = id => document.getElementById(id);
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ─────────────────────────────────
+   QUESTION RENDER
+───────────────────────────────── */
+function renderQ(animate) {
+  const q = QS[qi];
+
+  $('qz-count').textContent = `${qi + 1} / 7`;
+  $('q-label').textContent  = q.label;
+  $('q-text').textContent   = q.text;
+
+  // dots
+  const dotsEl = $('dots');
+  dotsEl.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i < qi ? ' done' : i === qi ? ' active' : '');
+    dotsEl.appendChild(d);
+  }
+
+  // answers
+  const ans = $('answers');
+  ans.innerHTML = '';
+  q.opts.forEach((opt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'ans';
+    btn.innerHTML = `<span class="ans-emoji">${opt.e}</span><span class="ans-text">${opt.t}</span>`;
+    btn.style.cssText = `opacity:0; animation: qSlideIn .38s ${idx * .08}s cubic-bezier(.34,1.56,.64,1) both;`;
+    btn.addEventListener('click', () => pick(btn, opt.f, idx));
+    ans.appendChild(btn);
+  });
+
+  // body slide animation
+  const body = $('qz-body');
+  if (animate) {
+    body.style.animation = 'qSlideIn .35s cubic-bezier(.34,1.56,.64,1) both';
+    setTimeout(() => body.style.animation = '', 400);
+  }
+}
+
+/* ─────────────────────────────────
+   PICK ANSWER
+───────────────────────────────── */
+function pick(btn, flavor, idx) {
+  if (busy) return;
+  busy = true;
+
+  scores[flavor] = (scores[flavor] || 0) + 1;
+
+  // visual feedback
+  document.querySelectorAll('.ans').forEach((b, i) => {
+    b.classList.add(i === idx ? 'chosen' : 'faded');
+  });
+
+  setTimeout(() => {
+    if (qi < 6) {
+      qi++;
+      renderQ(true);
+      busy = false;
+    } else {
+      showLoading();
+    }
+  }, 520);
+}
+
+/* ─────────────────────────────────
+   LOADING → RESULT
+───────────────────────────────── */
+function showLoading() {
+  show('s-loading');
+  setTimeout(showResult, 2200);
+}
+
+function showResult() {
+  // pick winner (most points; ties broken by priority order)
+  const order = ["RF","FI","MA","MN","LU","SA","CI"];
+  winner = order.reduce((best, f) =>
+    (scores[f] || 0) > (scores[best] || 0) ? f : best, order[0]);
+
+  const R = RESULTS[winner];
+
+  $('res-img').src       = R.img;
+  $('res-img').alt       = R.name;
+  $('res-badge').textContent   = R.badge;
+  $('res-name').textContent    = R.name;
+  $('res-desc').textContent    = R.desc;
+  $('res-tagline').textContent = R.tagline;
+  $('res-bg').style.background = R.bg;
+
+  show('s-result');
+  setTimeout(confetti, 350);
+  busy = false;
+}
+
+/* ─────────────────────────────────
+   RESET
+───────────────────────────────── */
+function reset() {
+  qi = 0;
+  scores = {};
+  busy = false;
+  show('s-intro');
+}
+
+/* ─────────────────────────────────
+   CONFETTI
+───────────────────────────────── */
+function confetti() {
+  const cv = $('confetti');
+  const cx = cv.getContext('2d');
+  cv.width  = window.innerWidth;
+  cv.height = window.innerHeight;
+
+  const colors = ['#C8102E','#FFD600','#2D9B27','#ffffff','#FF6B1A','#E8165A'];
+  const pieces = Array.from({length: 90}, () => ({
+    x:  Math.random() * cv.width,
+    y:  -Math.random() * 80,
+    w:  Math.random() * 10 + 5,
+    h:  Math.random() * 6  + 3,
+    r:  Math.random() * 360,
+    vx: (Math.random() - .5) * 3.5,
+    vy: Math.random() * 3.5 + 1.5,
+    vr: (Math.random() - .5) * 7,
+    c:  colors[Math.floor(Math.random() * colors.length)]
+  }));
+
+  let f = 0;
+  (function loop() {
+    cx.clearRect(0, 0, cv.width, cv.height);
+    pieces.forEach(p => {
+      p.x += p.vx; p.y += p.vy + f * .025; p.r += p.vr;
+      cx.save();
+      cx.translate(p.x, p.y); cx.rotate(p.r * Math.PI / 180);
+      cx.fillStyle = p.c;
+      cx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      cx.restore();
+    });
+    f++;
+    if (f < 130) requestAnimationFrame(loop);
+    else cx.clearRect(0, 0, cv.width, cv.height);
+  })();
+}
+
+/* ─────────────────────────────────
+   SHARE
+───────────────────────────────── */
+$('btn-share').addEventListener('click', () => {
+  const R = RESULTS[winner];
+  const msg =
+    `🍭 Hice el quiz de Bon Bon Bum y soy "${R.name}" — ${R.badge}!\n\n` +
+    `"${R.tagline}"\n\n` +
+    `#BonBonBum #SienteTuBum #PMH2026 #ColombinaCo`;
+
+  if (navigator.share) {
+    navigator.share({ title: '¿Qué sabor de Bon Bon Bum eres?', text: msg })
+      .catch(() => copy(msg));
+  } else {
+    copy(msg);
+  }
+});
+
+function copy(text) {
+  navigator.clipboard.writeText(text)
+    .then(() => toast('¡Resultado copiado! Pégalo en tus redes 🍭'))
+    .catch(() => toast('¡Comparte tu resultado! ' + text.split('\n')[0]));
+}
+
+/* ─────────────────────────────────
+   BOOT
+───────────────────────────────── */
+$('btn-start').addEventListener('click', () => {
+  scores = {}; qi = 0; busy = false;
+  renderQ(false);
+  show('s-quiz');
+  $('s-quiz').scrollTop = 0;
+});
+
+$('btn-retry').addEventListener('click', reset);
+</script>
+</body>
+</html>
